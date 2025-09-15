@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Premium MP3 Player</title>
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3);
+        }
+
+        .player-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .player-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-input-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255, 107, 107, 0.4);
+        }
+
+        .playlist {
+            margin-bottom: 30px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            min-height: 60px;
+        }
+
+        .playlist.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .track:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .track.active {
+            background: linear-gradient(90deg, rgba(255, 107, 107, 0.3), rgba(238, 90, 36, 0.3));
+        }
+
+        .track-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .track-duration {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .player-controls {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .progress-container {
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .progress-bar:hover .progress-fill::after {
+            opacity: 1;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .play-btn {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            font-size: 1.4rem;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            border-radius: 3px;
+            width: 100%;
+            position: relative;
+        }
+
+        .volume-fill::after {
+            content: '';
+            position: absolute;
+            right: -9px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .volume-slider:hover .volume-fill::after {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .effects-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .effect-group {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .effect-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .effect-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .effect-slider {
+            width: 120px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .effect-slider-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border-radius: 2px;
+            width: 50%;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .effect-slider-fill::after {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+            cursor: grab;
+        }
+
+        .effect-slider:hover .effect-slider-fill::after {
+            transform: translateY(-50%) scale(1.3);
+        }
+
+        .effect-slider.dragging .effect-slider-fill::after {
+            cursor: grabbing;
+            transform: translateY(-50%) scale(1.5);
+        }
+
+        .effect-value {
+            min-width: 40px;
+            text-align: right;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .quality-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .quality-badge {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quality-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+        }
+
+        .quality-badge.standard {
+            background: linear-gradient(45deg, #666, #888);
+        }
+
+        .reset-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #ff9a56, #ff6b6b);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+            font-size: 1rem;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        .visualizer {
+            height: 150px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 2px;
+            padding: 20px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .visualizer-bar {
+            width: 4px;
+            background: linear-gradient(0deg, #ff6b6b, #4facfe);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+            height: 10px;
+            opacity: 0.8;
+        }
+        
+        .current-track-display {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.9;
+            min-height: 24px;
+        }
+
+        .status-message {
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .settings-status {
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .keyboard-help {
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        /* Draggable slider styles */
+        .draggable-slider {
+            position: relative;
+        }
+
+        .draggable-slider .slider-handle {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .draggable-slider .slider-handle:hover {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .draggable-slider .slider-handle.dragging {
+            cursor: grabbing;
+            transform: translateY(-50%) scale(1.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .dragging {
+            user-select: none;
+        }
+    
+/* Vertical EQ list: label on left, slider on right */
+.eq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.eq-list .effect-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.eq-list .effect-control span:first-child {
+    flex: 0 0 100px;   /* fixed width for label column */
+    text-align: left;
+    margin-bottom: 0;
+}
+
+.eq-list .effect-slider {
+    width: 180px;   /* Adjusted to make sliders wider */
+    margin: 0 12px;
+}
+
+/* Stereo Width + Compressor stacked neatly */
+.inline-effects {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+/* New CSS for aligning spatial effects sliders */
+.inline-effects .effect-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.inline-effects .effect-control span:first-child {
+    flex: 0 0 100px; /* fixed width for label column */
+    text-align: left;
+    margin-bottom: 0;
+}
+
+.inline-effects .effect-slider {
+    width: 180px;  /* Adjusted to make sliders wider */
+    margin: 0 12px;
+}
+</style>
+</head>
+<body>
+<div class="player-container">
+<div class="player-header">
+<h1 class="player-title">Premium Audio Player</h1>
+<div class="quality-indicator">
+<span>Audio Processing</span>
+<span class="quality-badge" id="qualityToggle">48kHz/24-bit</span>
+</div>
+</div>
+<div class="file-input-container">
+<input accept="audio/mp3,audio/mpeg,audio/flac,audio/wav,audio/x-m4a,audio/*" class="file-input" id="fileInput" multiple="" type="file"/>
+<label class="file-input-label" for="fileInput">
+                🎵 Select MP3 Files
+            </label>
+</div>
+<div class="playlist empty" id="playlist">
+            No files selected
+        </div>
+<div class="player-controls">
+<div class="progress-container">
+<div class="progress-bar draggable-slider" id="progressBar">
+<div class="progress-fill" id="progressFill"></div>
+</div>
+<div class="time-display">
+<span id="currentTime">0:00</span>
+<span id="totalTime">0:00</span>
+</div>
+</div>
+<div class="controls-row">
+<button class="control-btn" disabled="" id="prevBtn">⏮</button>
+<button class="control-btn play-btn" disabled="" id="playBtn">▶</button>
+<button class="control-btn" disabled="" id="nextBtn">⏭</button>
+<button class="control-btn" disabled="" id="shuffleBtn">🔀</button>
+<button class="control-btn" disabled="" id="repeatBtn">🔁</button>
+</div>
+<div class="volume-container">
+<span>🔊</span>
+<div class="volume-slider draggable-slider" id="volumeSlider">
+<div class="volume-fill" id="volumeFill"></div>
+</div>
+<span id="volumeValue">100%</span>
+</div>
+</div>
+<div class="effects-panel">
+<div class="effect-group">
+<div class="effect-title">🎛️ Equalizer</div>
+<div class="eq-list"><div class="effect-control">
+<span>Sub Bass 40hz</span>
+<div class="effect-slider draggable-slider" data-effect="subBass">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0dB</span>
+</div><div class="effect-control">
+<span>Bass 100hz</span>
+<div class="effect-slider draggable-slider" data-effect="bass">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0dB</span>
+</div><div class="effect-control">
+<span>Mid 2Khz</span>
+<div class="effect-slider draggable-slider" data-effect="mid">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0dB</span>
+</div><div class="effect-control">
+<span>Treble 9Khz</span>
+<div class="effect-slider draggable-slider" data-effect="treble">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0dB</span>
+</div></div></div>
+<div class="effect-group">
+<div class="effect-title">🎭 Spatial Effects</div>
+<div class="inline-effects"><div class="effect-control">
+<span>Stereo Width</span>
+<div class="effect-slider draggable-slider" data-effect="msWidth">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0%</span>
+</div><div class="effect-control">
+<span>Compressor</span>
+<div class="effect-slider draggable-slider" data-effect="compressor">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0%</span>
+</div><div class="effect-control">
+<span>Exciter</span>
+<div class="effect-slider draggable-slider" data-effect="exciter">
+<div class="effect-slider-fill"></div>
+</div>
+<span class="effect-value">0%</span>
+</div></div></div>
+</div>
+<div class="reset-controls">
+<button class="reset-btn" id="resetBtn">🔄 Reset All Effects</button>
+</div>
+<div class="current-track-display" id="currentTrackNameDisplay"></div>
+<div class="visualizer" id="visualizer"></div>
+<div class="status-message" id="statusMessage">Ready to load audio files</div>
+<div class="settings-status" id="settingsStatus">Settings will be remembered across sessions</div>
+<div class="keyboard-help">
+⌨️ Keyboard Controls: Space (Play/Pause) • ← → (Seek) • ↑ ↓ (Volume)
+</div>
+</div>
+<script>
+        // Settings storage utility - simulates localStorage for Claude.ai compatibility
+        class SettingsStorage {
+            constructor() {
+                this.settings = {
+                    volume: 1.0,
+                    subBass: 0.5,
+                    bass: 0.5,
+                    mid: 0.5,
+                    treble: 0.5,
+                    msWidth: 0.0, // Set to 0% for reset
+                    compressor: 0.0,
+                    exciter: 0.0 // New exciter setting
+                };
+                this.loadSettings();
+            }
+
+            loadSettings() {
+                try {
+                    // Try to use localStorage if available
+                    if (typeof Storage !== "undefined" && window.localStorage) {
+                        const saved = localStorage.getItem('audioPlayerSettings');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            this.settings = { ...this.settings, ...parsed };
+                            console.log('Settings loaded from localStorage:', this.settings);
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.log('localStorage not available, using in-memory storage');
+                }
+                console.log('Using default settings:', this.settings);
+                return false;
+            }
+
+            saveSettings() {
+                try {
+                    // Try to save to localStorage if available
+                    if (typeof Storage !== "undefined" && window.localStorage) {
+                        localStorage.setItem('audioPlayerSettings', JSON.stringify(this.settings));
+                        console.log('Settings saved to localStorage:', this.settings);
+                        return true;
+                    }
+                } catch (error) {
+                    console.log('Could not save to localStorage, settings will be lost on page reload');
+                }
+                // Settings remain in memory for current session
+                console.log('Settings stored in memory for current session:', this.settings);
+                return false;
+            }
+
+            get(key) {
+                return this.settings[key];
+            }
+
+            set(key, value) {
+                this.settings[key] = value;
+                this.saveSettings();
+            }
+
+            getAll() {
+                return { ...this.settings };
+            }
+        }
+            
+        class DraggableSlider {
+            constructor(element, onUpdate) {
+                this.element = element;
+                this.onUpdate = onUpdate;
+                this.isDragging = false;
+                this.rect = null;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                this.element.addEventListener('mousedown', (e) => this.startDrag(e));
+                this.element.addEventListener('touchstart', (e) => this.startDrag(e));
+                
+                document.addEventListener('mousemove', (e) => this.drag(e));
+                document.addEventListener('touchmove', (e) => this.drag(e));
+                
+                document.addEventListener('mouseup', () => this.stopDrag());
+                document.addEventListener('touchend', () => this.stopDrag());
+            }
+
+            startDrag(event) {
+                event.preventDefault();
+                this.isDragging = true;
+                this.element.classList.add('dragging');
+                this.rect = this.element.getBoundingClientRect();
+                this.updateValue(event);
+            }
+
+            drag(event) {
+                if (!this.isDragging) return;
+                this.updateValue(event);
+            }
+
+            stopDrag() {
+                this.isDragging = false;
+                this.element.classList.remove('dragging');
+            }
+
+            updateValue(event) {
+                const clientX = (event.touches && event.touches[0]) ? event.touches[0].clientX : event.clientX;
+                let percent = (clientX - this.rect.left) / this.rect.width;
+                percent = Math.max(0, Math.min(1, percent));
+                this.onUpdate(percent);
+            }
+        }
+
+        class PremiumAudioPlayer {
+            constructor() {
+                // Initialize core components
+                this.audio = new Audio();
+                this.audioContext = null;
+                this.audioSource = null;
+                this.gainNode = null;
+                this.subBassFilter = null;
+                this.bassFilter = null;
+                this.midFilter = null;
+                this.trebleFilter = null;
+                this.compressor = null;
+                
+                // Exciter components
+                this.exciterHighpass = null;
+                this.exciterDistortion = null;
+                this.exciterGain = null;
+                this.exciterMix = null;
+                
+                // M/S stereo width components
+                this.splitter = null;
+                this.merger = null;
+                this.midGain = null;
+                this.sideGain = null;
+                this.leftToMidGain = null;
+                this.rightToMidGain = null;
+                this.leftToSideGain = null;
+                this.rightToSideGain = null;
+                this.midToLeftGain = null;
+                this.midToRightGain = null;
+                this.sideToLeftGain = null;
+                this.sideToRightGain = null;
+                
+                this.analyser = null;
+                this.isInitialized = false;
+
+                // State
+                this.playlist = [];
+                this.currentTrackIndex = -1;
+                this.isPlaying = false;
+                this.isShuffle = false;
+                this.repeatMode = 'none'; // 'none', 'one', 'all'
+                this.settings = new SettingsStorage();
+                this.visualizerData = new Uint8Array(128); // 128 bars
+                this.seekInterval = null;
+                this.seekTimeout = null;
+                this.isSeeking = false;
+                this.lastButtonPressed = null;
+
+                // DOM elements
+                this.fileInput = document.getElementById('fileInput');
+                this.playlistEl = document.getElementById('playlist');
+                this.playBtn = document.getElementById('playBtn');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.shuffleBtn = document.getElementById('shuffleBtn');
+                this.repeatBtn = document.getElementById('repeatBtn');
+                this.progressBarEl = document.getElementById('progressBar');
+                this.progressFillEl = document.getElementById('progressFill');
+                this.currentTimeEl = document.getElementById('currentTime');
+                this.totalTimeEl = document.getElementById('totalTime');
+                this.volumeSliderEl = document.getElementById('volumeSlider');
+                this.volumeFillEl = document.getElementById('volumeFill');
+                this.volumeValueEl = document.getElementById('volumeValue');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.qualityToggleBtn = document.getElementById('qualityToggle');
+                this.visualizerEl = document.getElementById('visualizer');
+                this.statusMessageEl = document.getElementById('statusMessage');
+                this.currentTrackNameDisplayEl = document.getElementById('currentTrackNameDisplay');
+
+                // Sliders
+                this.progressBar = new DraggableSlider(this.progressBarEl, (percent) => this.seekByPercent(percent));
+                this.volumeSlider = new DraggableSlider(this.volumeSliderEl, (percent) => this.setVolume(percent));
+
+                this.effectSliders = {};
+                document.querySelectorAll('.effect-slider').forEach(el => {
+                    const effectName = el.dataset.effect;
+                    this.effectSliders[effectName] = new DraggableSlider(el, (percent) => this.updateEffect(effectName, percent));
+                });
+
+                this.setupEventListeners();
+                this.renderInitialState();
+                this.updateQualityDisplay();
+                this.updateRepeatIcon();
+            }
+
+            setupAudioContext() {
+                if (this.isInitialized) return;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                    this.gainNode = this.audioContext.createGain();
+                    this.gainNode.gain.setValueAtTime(this.settings.get('volume'), this.audioContext.currentTime);
+
+                    // EQ filters
+                    this.subBassFilter = this.audioContext.createBiquadFilter();
+                    this.subBassFilter.type = 'lowshelf';
+                    this.subBassFilter.frequency.setValueAtTime(40, this.audioContext.currentTime);
+                    this.subBassFilter.gain.setValueAtTime(this.mapDb(this.settings.get('subBass')), this.audioContext.currentTime);
+
+                    this.bassFilter = this.audioContext.createBiquadFilter();
+                    this.bassFilter.type = 'lowshelf';
+                    this.bassFilter.frequency.setValueAtTime(100, this.audioContext.currentTime);
+                    this.bassFilter.gain.setValueAtTime(this.mapDb(this.settings.get('bass')), this.audioContext.currentTime);
+
+                    this.midFilter = this.audioContext.createBiquadFilter();
+                    this.midFilter.type = 'peaking';
+                    this.midFilter.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+                    this.midFilter.Q.setValueAtTime(0.5, this.audioContext.currentTime);
+                    this.midFilter.gain.setValueAtTime(this.mapDb(this.settings.get('mid')), this.audioContext.currentTime);
+
+                    this.trebleFilter = this.audioContext.createBiquadFilter();
+                    this.trebleFilter.type = 'highshelf';
+                    this.trebleFilter.frequency.setValueAtTime(9000, this.audioContext.currentTime);
+                    this.trebleFilter.gain.setValueAtTime(this.mapDb(this.settings.get('treble')), this.audioContext.currentTime);
+
+                    this.compressor = this.audioContext.createDynamicsCompressor();
+                    this.compressor.threshold.setValueAtTime(-24, this.audioContext.currentTime);
+                    this.compressor.knee.setValueAtTime(30, this.audioContext.currentTime);
+                    this.compressor.ratio.setValueAtTime(4, this.audioContext.currentTime);
+                    this.compressor.attack.setValueAtTime(0.003, this.audioContext.currentTime);
+                    this.compressor.release.setValueAtTime(0.25, this.audioContext.currentTime);
+                    this.setCompressor(this.settings.get('compressor'));
+
+                    // Exciter setup - creates harmonic enhancement for high frequencies
+                    this.exciterHighpass = this.audioContext.createBiquadFilter();
+                    this.exciterHighpass.type = 'highpass';
+                    this.exciterHighpass.frequency.setValueAtTime(3000, this.audioContext.currentTime);
+                    this.exciterHighpass.Q.setValueAtTime(0.7, this.audioContext.currentTime);
+
+                    // Create a waveshaper for harmonic distortion
+                    this.exciterDistortion = this.audioContext.createWaveShaper();
+                    this.exciterDistortion.curve = this.createExciterCurve();
+                    this.exciterDistortion.oversample = '4x';
+
+                    this.exciterGain = this.audioContext.createGain();
+                    this.exciterGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+
+                    this.exciterMix = this.audioContext.createGain();
+                    this.exciterMix.gain.setValueAtTime(0.0, this.audioContext.currentTime);
+                    this.setExciter(this.settings.get('exciter'));
+
+                    // M/S stereo width setup
+                    this.splitter = this.audioContext.createChannelSplitter(2);
+                    this.merger = this.audioContext.createChannelMerger(2);
+                    
+                    // M/S processing gains
+                    this.midGain = this.audioContext.createGain();
+                    this.sideGain = this.audioContext.createGain();
+                    this.setMsWidth(this.settings.get('msWidth'));
+
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = 128;
+                    this.analyser.smoothingTimeConstant = 0.8;
+
+                    // Connect the audio processing chain
+                    this.audioSource = this.audioContext.createMediaElementSource(this.audio);
+                    
+                    // Main signal path
+                    this.audioSource
+                        .connect(this.gainNode)
+                        .connect(this.subBassFilter)
+                        .connect(this.bassFilter)
+                        .connect(this.midFilter)
+                        .connect(this.trebleFilter)
+                        .connect(this.compressor);
+
+                    // Exciter parallel path - processes high frequencies separately
+                    this.audioSource.connect(this.exciterHighpass);
+                    this.exciterHighpass
+                        .connect(this.exciterDistortion)
+                        .connect(this.exciterGain)
+                        .connect(this.exciterMix);
+
+                    // Create a gain node to sum the main signal with the excited signal
+                    const exciterSum = this.audioContext.createGain();
+                    this.compressor.connect(exciterSum);
+                    this.exciterMix.connect(exciterSum);
+
+                    exciterSum.connect(this.splitter);
+
+                    // M/S matrix
+                    // Create mid and side signals from left and right channels
+                    const leftToMidGain = this.audioContext.createGain();
+                    const rightToMidGain = this.audioContext.createGain();
+                    const leftToSideGain = this.audioContext.createGain();
+                    const rightToSideGain = this.audioContext.createGain();
+                    leftToMidGain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+                    rightToMidGain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+                    leftToSideGain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+                    rightToSideGain.gain.setValueAtTime(-0.5, this.audioContext.currentTime);
+
+                    this.splitter.connect(leftToMidGain, 0);
+                    this.splitter.connect(rightToMidGain, 1);
+                    this.splitter.connect(leftToSideGain, 0);
+                    this.splitter.connect(rightToSideGain, 1);
+                    leftToMidGain.connect(this.midGain);
+                    rightToMidGain.connect(this.midGain);
+                    leftToSideGain.connect(this.sideGain);
+                    rightToSideGain.connect(this.sideGain);
+
+                    // Decode back to L/R
+                    const midToLeftGain = this.audioContext.createGain();
+                    const midToRightGain = this.audioContext.createGain();
+                    const sideToLeftGain = this.audioContext.createGain();
+                    const sideToRightGain = this.audioContext.createGain();
+                    midToLeftGain.gain.setValueAtTime(1, this.audioContext.currentTime);
+                    midToRightGain.gain.setValueAtTime(1, this.audioContext.currentTime);
+                    sideToLeftGain.gain.setValueAtTime(1, this.audioContext.currentTime);
+                    sideToRightGain.gain.setValueAtTime(-1, this.audioContext.currentTime);
+                    
+                    this.midGain.connect(midToLeftGain);
+                    this.midGain.connect(midToRightGain);
+                    this.sideGain.connect(sideToLeftGain);
+                    this.sideGain.connect(sideToRightGain);
+
+                    midToLeftGain.connect(this.merger, 0, 0);
+                    sideToLeftGain.connect(this.merger, 0, 0);
+                    midToRightGain.connect(this.merger, 0, 1);
+                    sideToRightGain.connect(this.merger, 0, 1);
+
+                    this.merger.connect(this.analyser);
+                    this.analyser.connect(this.audioContext.destination);
+
+                    this.isInitialized = true;
+                    this.updateStatus('Web Audio API initialized');
+                    this.updateAllEffects(); // Apply saved settings
+                    this.setVolume(this.settings.get('volume')); // Apply saved volume
+                    this.startVisualizer();
+
+                } catch (e) {
+                    this.updateStatus('Web Audio API is not supported in this browser.');
+                    this.statusMessageEl.style.color = '#ff6b6b';
+                    console.error("Web Audio API not supported", e);
+                }
+            }
+
+            setupEventListeners() {
+                this.fileInput.addEventListener('change', (e) => this.loadFiles(e.target.files));
+                this.playBtn.addEventListener('click', () => this.togglePlayPause());
+                
+                // Corrected logic for dual-purpose previous and next buttons
+                this.prevBtn.addEventListener('mousedown', () => this.startSeek(this.prevBtn, -5));
+                this.nextBtn.addEventListener('mousedown', () => this.startSeek(this.nextBtn, 5));
+                document.addEventListener('mouseup', () => this.stopSeek());
+                document.addEventListener('mouseout', (e) => {
+                    // Stop seek if mouse leaves the document or the button itself
+                    if (!e.relatedTarget || !e.relatedTarget.closest('.control-btn')) {
+                        this.stopSeek();
+                    }
+                });
+                
+                this.shuffleBtn.addEventListener('click', () => this.toggleShuffle());
+                this.repeatBtn.addEventListener('click', () => this.toggleRepeat());
+                this.qualityToggleBtn.addEventListener('click', () => this.toggleQuality());
+                this.resetBtn.addEventListener('click', () => this.resetEffects());
+
+                this.audio.addEventListener('timeupdate', () => this.updateProgressBar());
+                this.audio.addEventListener('loadedmetadata', () => this.updateTotalTime());
+                this.audio.addEventListener('ended', () => {
+                    this.next();
+                });
+                this.audio.addEventListener('play', () => {
+                    this.isPlaying = true;
+                    this.playBtn.textContent = '⏸';
+                    this.updateStatus('Playing: ' + this.playlist[this.currentTrackIndex].file.name);
+                    this.currentTrackNameDisplayEl.textContent = this.playlist[this.currentTrackIndex].file.name;
+                    this.playBtn.classList.remove('play-btn');
+                });
+                this.audio.addEventListener('pause', () => {
+                    this.isPlaying = false;
+                    this.playBtn.textContent = '▶';
+                    this.playBtn.classList.add('play-btn');
+                });
+                this.audio.addEventListener('error', (e) => {
+                    console.error('Audio Error:', e);
+                    this.updateStatus('Error playing file');
+                });
+
+                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+            }
+
+            // Corrected methods for dual-purpose button functionality
+            startSeek(button, timeChange) {
+                if (!this.playlist.length) return; // Exit if no tracks loaded
+                
+                this.isSeeking = false;
+                this.lastButtonPressed = button;
+                
+                // Use a timeout to differentiate between a short click and a long press
+                this.seekTimeout = setTimeout(() => {
+                    this.isSeeking = true;
+                    // Start seeking every 100ms
+                    this.seekInterval = setInterval(() => {
+                        this.seekByTime(this.audio.currentTime + timeChange);
+                    }, 100);
+                }, 300); // 300ms delay for seeking to start
+            }
+
+            stopSeek() {
+                clearTimeout(this.seekTimeout);
+                clearInterval(this.seekInterval);
+                
+                // Check if it was a short click and a button was actually pressed
+                if (!this.isSeeking && this.lastButtonPressed) {
+                    if (this.lastButtonPressed === this.prevBtn) {
+                        this.prev();
+                    } else if (this.lastButtonPressed === this.nextBtn) {
+                        this.next();
+                    }
+                }
+                
+                this.isSeeking = false;
+                this.lastButtonPressed = null;
+            }
+
+            handleKeyboard(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                 switch (e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        this.togglePlayPause();
+                        break;
+                    case 'ArrowRight':
+                        this.seekByTime(this.audio.currentTime + 5);
+                        break;
+                    case 'ArrowLeft':
+                        this.seekByTime(this.audio.currentTime - 5);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault(); // Prevent page scrolling
+                        this.setVolume(this.audio.volume + 0.1);
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault(); // Prevent page scrolling
+                        this.setVolume(this.audio.volume - 0.1);
+                        break;
+                }
+            }
+
+            loadFiles(files) {
+                this.playlist = Array.from(files).map(file => ({
+                    file,
+                    url: URL.createObjectURL(file)
+                }));
+                this.currentTrackIndex = 0;
+                this.renderPlaylist();
+                this.updateButtonsState();
+                if (this.playlist.length > 0) {
+                    this.playTrack(0);
+                }
+            }
+
+            renderPlaylist() {
+                this.playlistEl.innerHTML = '';
+                this.playlistEl.classList.remove('empty');
+                if (this.playlist.length === 0) {
+                    this.playlistEl.classList.add('empty');
+                    this.playlistEl.textContent = 'No files selected';
+                    return;
+                }
+                this.playlist.forEach((track, index) => {
+                    const trackEl = document.createElement('div');
+                    trackEl.classList.add('track');
+                    if (index === this.currentTrackIndex) {
+                        trackEl.classList.add('active');
+                    }
+                    trackEl.innerHTML = `
+                        <span class="track-name">${track.file.name}</span>
+                        <span class="track-duration"></span>
+                    `;
+                    trackEl.addEventListener('click', () => this.playTrack(index));
+                    this.playlistEl.appendChild(trackEl);
+                });
+            }
+
+            playTrack(index) {
+                if (index < 0 || index >= this.playlist.length) {
+                    this.updateStatus('End of playlist reached');
+                    if (this.repeatMode === 'all') {
+                        this.playTrack(0);
+                    } else if (this.repeatMode === 'one') {
+                        this.playTrack(this.currentTrackIndex);
+                    } else {
+                        this.stop();
+                    }
+                    return;
+                }
+                if (!this.isInitialized) {
+                    this.setupAudioContext();
+                }
+
+                this.currentTrackIndex = index;
+                const track = this.playlist[this.currentTrackIndex];
+                this.audio.src = track.url;
+                this.audio.load();
+                this.audio.play();
+
+                this.renderPlaylist(); // Re-render to show active track
+            }
+
+            togglePlayPause() {
+                if (this.audio.paused) {
+                    if (this.playlist.length > 0 && this.currentTrackIndex !== -1) {
+                        this.audio.play();
+                    }
+                } else {
+                    this.audio.pause();
+                }
+            }
+
+            stop() {
+                this.audio.pause();
+                this.audio.currentTime = 0;
+            }
+
+            next() {
+                let nextIndex = this.currentTrackIndex + 1;
+                if (this.isShuffle) {
+                    nextIndex = Math.floor(Math.random() * this.playlist.length);
+                }
+                if (nextIndex >= this.playlist.length) {
+                    if (this.repeatMode === 'all' || this.isShuffle) {
+                        nextIndex = 0;
+                    } else {
+                        this.stop();
+                        this.updateStatus('End of playlist');
+                        return;
+                    }
+                }
+                this.playTrack(nextIndex);
+            }
+
+            prev() {
+                let prevIndex = this.currentTrackIndex - 1;
+                if (prevIndex < 0) {
+                    prevIndex = this.playlist.length - 1;
+                }
+                this.playTrack(prevIndex);
+            }
+
+            toggleShuffle() {
+                this.isShuffle = !this.isShuffle;
+                this.shuffleBtn.style.color = this.isShuffle ? '#4facfe' : 'white';
+                this.updateStatus(`Shuffle is now ${this.isShuffle ? 'ON' : 'OFF'}`);
+            }
+
+            toggleRepeat() {
+                if (this.repeatMode === 'none') {
+                    this.repeatMode = 'all';
+                } else if (this.repeatMode === 'all') {
+                    this.repeatMode = 'one';
+                } else {
+                    this.repeatMode = 'none';
+                }
+                this.updateRepeatIcon();
+                this.updateStatus(`Repeat mode: ${this.repeatMode}`);
+            }
+            
+            updateRepeatIcon() {
+                let icon = '🔁';
+                if (this.repeatMode === 'all') icon = '🔂';
+                if (this.repeatMode === 'one') icon = '🔀';
+                if (this.repeatMode === 'none') icon = '🔁'; // Back to default icon, could be a better way
+                this.repeatBtn.textContent = icon;
+                this.repeatBtn.style.color = this.repeatMode === 'none' ? 'white' : '#4facfe';
+            }
+
+            updateProgressBar() {
+                const { currentTime, duration } = this.audio;
+                if (duration) {
+                    const progress = (currentTime / duration) * 100;
+                    this.progressFillEl.style.width = `${progress}%`;
+                    this.currentTimeEl.textContent = this.formatTime(currentTime);
+                } else {
+                    this.progressFillEl.style.width = '0%';
+                    this.currentTimeEl.textContent = '0:00';
+                }
+            }
+
+            updateTotalTime() {
+                this.totalTimeEl.textContent = this.formatTime(this.audio.duration);
+            }
+
+            seekByPercent(percent) {
+                if (this.audio.duration) {
+                    this.audio.currentTime = this.audio.duration * percent;
+                }
+            }
+
+            seekByTime(time) {
+                if (this.audio.duration) {
+                    const newTime = Math.max(0, Math.min(this.audio.duration, time));
+                    this.audio.currentTime = newTime;
+                }
+            }
+
+            setVolume(percent) {
+                const newVolume = Math.max(0, Math.min(1, percent));
+                this.audio.volume = newVolume;
+                if (this.gainNode) {
+                    this.gainNode.gain.value = newVolume;
+                }
+                const volumePercent = Math.round(newVolume * 100);
+                this.volumeFillEl.style.width = `${volumePercent}%`;
+                this.volumeValueEl.textContent = `${volumePercent}%`;
+                this.settings.set('volume', newVolume);
+            }
+
+            updateEffect(effectName, percent) {
+                const fill = this.effectSliders[effectName].element.querySelector('.effect-slider-fill');
+                const valueEl = this.effectSliders[effectName].element.nextElementSibling;
+                fill.style.width = `${percent * 100}%`;
+
+                if (!this.isInitialized) return;
+
+                switch (effectName) {
+                    case 'subBass':
+                        this.subBassFilter.gain.value = this.mapDb(percent);
+                        valueEl.textContent = `${this.subBassFilter.gain.value.toFixed(1)}dB`;
+                        break;
+                    case 'bass':
+                        this.bassFilter.gain.value = this.mapDb(percent);
+                        valueEl.textContent = `${this.bassFilter.gain.value.toFixed(1)}dB`;
+                        break;
+                    case 'mid':
+                        this.midFilter.gain.value = this.mapDb(percent);
+                        valueEl.textContent = `${this.midFilter.gain.value.toFixed(1)}dB`;
+                        break;
+                    case 'treble':
+                        this.trebleFilter.gain.value = this.mapDb(percent);
+                        valueEl.textContent = `${this.trebleFilter.gain.value.toFixed(1)}dB`;
+                        break;
+                    case 'msWidth':
+                        this.setMsWidth(percent);
+                        valueEl.textContent = `${(percent * 100).toFixed(0)}%`;
+                        break;
+                    case 'compressor':
+                        this.setCompressor(percent);
+                        valueEl.textContent = `${(percent * 100).toFixed(0)}%`;
+                        break;
+                    case 'exciter':
+                        this.setExciter(percent);
+                        valueEl.textContent = `${(percent * 100).toFixed(0)}%`;
+                        break;
+                }
+                this.settings.set(effectName, percent);
+            }
+
+            setMsWidth(percent) {
+                if (!this.isInitialized) return;
+                const widthFactor = percent * 2; // 0 to 2 range
+                this.sideGain.gain.setValueAtTime(widthFactor, this.audioContext.currentTime);
+            }
+
+            setCompressor(percent) {
+                if (!this.isInitialized) return;
+                const ratio = 4 + (percent * 8); // 4 to 12
+                const threshold = -24 * (1 - percent); // -24 to 0 dB
+                this.compressor.threshold.setValueAtTime(threshold, this.audioContext.currentTime);
+                this.compressor.ratio.setValueAtTime(ratio, this.audioContext.currentTime);
+            }
+
+            setExciter(percent) {
+                if (!this.isInitialized) return;
+                // Controls the mix level of the harmonic enhancement
+                const mixLevel = percent * 0.4; // Max 40% mix to avoid harshness
+                this.exciterMix.gain.setValueAtTime(mixLevel, this.audioContext.currentTime);
+                
+                // Adjust the exciter gain based on intensity
+                const exciterIntensity = 0.2 + (percent * 0.6); // Range from 0.2 to 0.8
+                this.exciterGain.gain.setValueAtTime(exciterIntensity, this.audioContext.currentTime);
+            }
+
+            createExciterCurve() {
+                // Creates a waveshaping curve that adds harmonic distortion
+                // This simulates tape saturation or tube warmth for high frequencies
+                const samples = 65536;
+                const curve = new Float32Array(samples);
+                const deg = Math.PI / 180;
+                
+                for (let i = 0; i < samples; i++) {
+                    const x = (i * 2) / samples - 1;
+                    // Soft saturation curve that adds harmonics
+                    curve[i] = Math.tanh(x * 2) * 0.7;
+                }
+                return curve;
+            }
+
+            mapDb(percent) {
+                // Maps a 0-1 percentage to a -15dB to +15dB scale
+                return (percent - 0.5) * 30;
+            }
+
+            updateAllEffects() {
+                if (!this.isInitialized) return;
+                const savedSettings = this.settings.getAll();
+                const effectNames = ['subBass', 'bass', 'mid', 'treble', 'msWidth', 'compressor', 'exciter'];
+                effectNames.forEach(name => {
+                    const percent = savedSettings[name];
+                    this.updateEffect(name, percent);
+                });
+            }
+
+            resetEffects() {
+                const defaultSettings = {
+                    subBass: 0.5,
+                    bass: 0.5,
+                    mid: 0.5,
+                    treble: 0.5,
+                    msWidth: 0.0, // Set to 0% for reset
+                    compressor: 0.0,
+                    exciter: 0.0 // Reset exciter to 0%
+                };
+                for (const [key, value] of Object.entries(defaultSettings)) {
+                    this.settings.set(key, value);
+                    this.updateEffect(key, value);
+                }
+                this.updateStatus('All effects reset to default values');
+            }
+
+            renderInitialState() {
+                this.updateAllEffects();
+                this.updateButtonsState();
+            }
+
+            updateButtonsState() {
+                const isDisabled = this.playlist.length === 0;
+                this.playBtn.disabled = isDisabled;
+                this.prevBtn.disabled = isDisabled;
+                this.nextBtn.disabled = isDisabled;
+                this.shuffleBtn.disabled = isDisabled;
+                this.repeatBtn.disabled = isDisabled;
+                this.resetBtn.disabled = isDisabled;
+            }
+
+            updateStatus(message) {
+                this.statusMessageEl.textContent = message;
+            }
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+
+            toggleQuality() {
+                // Toggles between "48kHz/24-bit" and "44.1kHz/16-bit"
+                const isHighQuality = this.qualityToggleBtn.textContent.includes('48kHz');
+                if (isHighQuality) {
+                    this.qualityToggleBtn.textContent = '44.1kHz/16-bit';
+                    this.qualityToggleBtn.classList.add('standard');
+                    this.updateStatus('Switched to Standard Quality');
+                } else {
+                    this.qualityToggleBtn.textContent = '48kHz/24-bit';
+                    this.qualityToggleBtn.classList.remove('standard');
+                    this.updateStatus('Switched to High Quality');
+                }
+                this.settings.set('highQuality', !isHighQuality);
+            }
+
+            updateQualityDisplay() {
+                const isHighQuality = this.settings.get('highQuality') !== false;
+                if (isHighQuality) {
+                    this.qualityToggleBtn.textContent = '48kHz/24-bit';
+                    this.qualityToggleBtn.classList.remove('standard');
+                } else {
+                    this.qualityToggleBtn.textContent = '44.1kHz/16-bit';
+                    this.qualityToggleBtn.classList.add('standard');
+                }
+            }
+
+            startVisualizer() {
+                if (!this.analyser) return;
+
+                const draw = () => {
+                    if (this.isPlaying) {
+                        this.analyser.getByteFrequencyData(this.visualizerData);
+                        const bars = this.visualizerEl.querySelectorAll('.visualizer-bar');
+                        const dataSlice = this.visualizerData.slice(0, bars.length);
+                        for (let i = 0; i < bars.length; i++) {
+                            const bar = bars[i];
+                            const barHeight = dataSlice[i] / 255 * 100;
+                            bar.style.height = `${barHeight}%`;
+                        }
+                    } else {
+                        // Fade out bars when paused or stopped
+                        const bars = this.visualizerEl.querySelectorAll('.visualizer-bar');
+                        bars.forEach(bar => {
+                            let currentHeight = parseFloat(bar.style.height);
+                            if (currentHeight > 0) {
+                                bar.style.height = `${currentHeight * 0.95}%`;
+                            }
+                        });
+                    }
+                    requestAnimationFrame(draw);
+                };
+
+                // Create bars
+                for (let i = 0; i < this.analyser.fftSize / 2; i++) {
+                    const bar = document.createElement('div');
+                    bar.classList.add('visualizer-bar');
+                    this.visualizerEl.appendChild(bar);
+                }
+
+                draw();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing Premium Audio Player with M/S Stereo Processing and Functional Exciter...');
+            window.audioPlayer = new PremiumAudioPlayer();
+            
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                document.getElementById('statusMessage').textContent = 
+                    'Error: Web Audio API not supported in this browser';
+                document.getElementById('statusMessage').style.color = '#ff6b6b';
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (window.audioPlayer && window.audioPlayer.isPlaying && document.hidden) {
+                console.log('Tab hidden, pausing audio');
+            }
+        });
+    </script>
+</body>
+</html>
