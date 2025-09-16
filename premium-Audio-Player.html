@@ -637,7 +637,7 @@
 </div>
 </div>
 <script>
-        // Settings storage utility - simulates localStorage for Claude.ai compatibility
+        // Settings storage utility - simulates localStorage
         class SettingsStorage {
             constructor() {
                 this.settings = {
@@ -1147,7 +1147,7 @@
                 this.audio.load();
                 this.audio.play();
 
-                this.renderPlaylist(); // Re-render to show active track
+                this.renderPlaylist();
             }
 
             togglePlayPause() {
@@ -1212,7 +1212,7 @@
                 let icon = '🔁';
                 if (this.repeatMode === 'all') icon = '🔂';
                 if (this.repeatMode === 'one') icon = '🔀';
-                if (this.repeatMode === 'none') icon = '🔁'; // Back to default icon, could be a better way
+                if (this.repeatMode === 'none') icon = '🔁';
                 this.repeatBtn.textContent = icon;
                 this.repeatBtn.style.color = this.repeatMode === 'none' ? 'white' : '#4facfe';
             }
@@ -1359,9 +1359,9 @@
                     bass: 0.5,
                     mid: 0.5,
                     treble: 0.5,
-                    msWidth: 0.0, // Set to 0% for reset
+                    msWidth: 0.0, 
                     compressor: 0.0,
-                    exciter: 0.0 // Reset exciter to 0%
+                    exciter: 0.0 
                 };
                 for (const [key, value] of Object.entries(defaultSettings)) {
                     this.settings.set(key, value);
